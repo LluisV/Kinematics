@@ -14,14 +14,14 @@ Eigen::Matrix4f forward_kinematics(const DH& robot);
 
 
 /**
- * @brief Calcula la cinemática inversa del robot utilizando un método iterativo basado en la pseudoinversa del Jacobiano.
+ * @brief Calculates the robot's inverse kinematics using an iterative method based on the pseudo-inverse of the Jacobian.
  *
- * @param robot Objeto DH que representa al robot. Se actualizarán internamente las posiciones articulares.
- * @param desiredTransform Matriz 4x4 deseada que representa la posición y orientación del efector final.
- * @param solution Vector donde se almacenará la solución (posición articular) encontrada.
- * @param tolerance Tolerancia para la convergencia del error (por defecto 1e-3).
- * @param maxIterations Número máximo de iteraciones (por defecto 100).
- * @return true si se alcanza la convergencia; false si se excede el número máximo de iteraciones.
+ * @param robot DH object representing the robot. The joint positions will be updated internally.
+ * @param desiredTransform 4x4 matrix representing the desired position and orientation of the end effector.
+ * @param solution Vector where the found solution (joint positions) will be stored.
+ * @param tolerance Convergence tolerance for the error (default is 1e-3).
+ * @param maxIterations Maximum number of iterations (default is 100).
+ * @return true if convergence is reached; false if the maximum number of iterations is exceeded.
  */
 bool inverse_kinematics(DH &robot,
     const Eigen::Matrix4f &desiredTransform,
