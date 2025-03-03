@@ -28,6 +28,7 @@ void DH::setJointParameters(
     joint.type = jointType;
 }
 
+
 bool DH::setJointPosition(int jointIndex, double position) {
     assert(jointIndex >= 0 && jointIndex < numberOfJoints);
     
@@ -57,6 +58,7 @@ bool DH::setJointPosition(int jointIndex, double position) {
     return true;
 }
 
+
 bool DH::setJointPositions(const Eigen::VectorXf& positions) {
     assert(positions.size() == numberOfJoints);
     
@@ -76,6 +78,7 @@ bool DH::setJointPositions(const Eigen::VectorXf& positions) {
     
     return true;
 }
+
 
 double DH::getJointPosition(int jointIndex) const {
     assert(jointIndex >= 0 && jointIndex < numberOfJoints);
@@ -114,46 +117,54 @@ double DH::getJointLimit(int jointIndex, LimitType limitType) const {
 
 
 bool DH::areJointPositionsWithinLimits(const Eigen::VectorXf& positions) const {
+    // Ensure the number of positions matches the number of joints
     assert(positions.size() == numberOfJoints);
     
+    // Define a small tolerance value to account for precision errors
     constexpr double epsilon = 1e-6; 
 
+    // Iterate through each joint to check its position
     for (int i = 0; i < numberOfJoints; ++i) {
         const DHJoint& joint = joints[i];
 
+        // If the joint has valid limits (min < max)
         if (joint.minLimit < joint.maxLimit) {
             double value = positions(i);
 
+            // If the joint is revolute, wrap the angle to ensure it stays within valid range
             if (joint.type == JointType::REVOLUTE) {
                 value = RoboticsUtils::wrap_angle(value);
             }
 
-            // Comprobación con tolerancia
+             // Check if the joint value is outside the defined limits with tolerance
             if (value < joint.minLimit - epsilon || value > joint.maxLimit + epsilon) {
-                return false;
+                return false; // Position is out of bounds
             }
         }
     }
 
+    // All positions are within the limits
     return true;
 }
 
 
 Eigen::Matrix4f DH::getJointTransform(int jointIndex) const {
+    // Ensure the joint index is valid (within the range of joints)
     assert(jointIndex >= 0 && jointIndex < numberOfJoints);
     
     const DHJoint& joint = joints[jointIndex];
     
-    double ct = cos(joint.theta);
-    double st = sin(joint.theta);
-    double ca = cos(joint.alpha);
-    double sa = sin(joint.alpha);
-    double d = joint.d;
-    double a = joint.a;
+    // Calculate trigonometric values for the DH parameters
+    double ct = cos(joint.theta);  // cos(theta)
+    double st = sin(joint.theta);  // sin(theta)
+    double ca = cos(joint.alpha);  // cos(alpha)
+    double sa = sin(joint.alpha);  // sin(alpha)
+    double d = joint.d;            // d parameter
+    double a = joint.a;            // a parameter
     
     Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
     
-    // Standard DH convention
+    // Apply the standard Denavit-Hartenberg convention to build the transformation matrix
     transform << ct, -st * ca, st * sa, a * ct,
                     st, ct * ca, -ct * sa, a * st,
                     0, sa, ca, d,
@@ -172,8 +183,9 @@ Eigen::Matrix4f DH::getTransformUpToJoint(int endJointIndex) const {
     
     Eigen::Matrix4f transform = Eigen::Matrix4f::Identity();
     
+    // Multiply the transformation matrices of each joint up to the specified endJointIndex
     for (int i = 0; i < endJointIndex; ++i) {
-        transform *= getJointTransform(i);
+        transform *= getJointTransform(i);  // Accumulate transformations
     }
     
     return transform;
@@ -220,31 +232,36 @@ int DH::getNumberOfJoints() const {
 
 
 Eigen::Matrix<float, 6, Eigen::Dynamic> DH::computeJacobian() const {
+
+    // Initialize the Jacobian matrix as a 6x(numberOfJoints) zero matrix
     Eigen::Matrix<float, 6, Eigen::Dynamic> jacobian =
         Eigen::Matrix<float, 6, Eigen::Dynamic>::Zero(6, numberOfJoints);
     
-    // Obtiene la transformación completa del efector final
+    // Get the full transformation matrix for the end effector
     Eigen::Matrix4f T_end = getTransformUpToJoint(-1);
-    Eigen::Vector3f p_end = T_end.block<3,1>(0, 3);
+    Eigen::Vector3f p_end = T_end.block<3,1>(0, 3); // End effector position
 
+    // Iterate over each joint to calculate its contribution to the Jacobian
     for (int i = 0; i < numberOfJoints; ++i) {
         Eigen::Matrix4f T_i = getTransformUpToJoint(i);
-        Eigen::Vector3f z_i = T_i.block<3, 1>(0, 2);  // Eje Z del sistema i-1
-        Eigen::Vector3f p_i = T_i.block<3, 1>(0, 3);  // Origen del sistema i-1
+        Eigen::Vector3f z_i = T_i.block<3, 1>(0, 2);  // Z axis of the i-1 frame
+        Eigen::Vector3f p_i = T_i.block<3, 1>(0, 3);  // Origin of the i-1 frame
         
         if (joints[i].type == JointType::REVOLUTE) {
-            // Para articulación rotacional
-            jacobian.block<3, 1>(0, i) = z_i.cross(p_end - p_i);
-            jacobian.block<3, 1>(3, i) = z_i;
+             // For revolute (rotational) joints
+            jacobian.block<3, 1>(0, i) = z_i.cross(p_end - p_i); // Linear velocity contribution
+            jacobian.block<3, 1>(3, i) = z_i; // Angular velocity contribution
         } else {
-            // Para articulación prismática
-            jacobian.block<3, 1>(0, i) = z_i;
-            jacobian.block<3, 1>(3, i) = Eigen::Vector3f::Zero();
+            // For prismatic (translational) joints
+            jacobian.block<3, 1>(0, i) = z_i; // Linear velocity contribution
+            jacobian.block<3, 1>(3, i) = Eigen::Vector3f::Zero();  // No angular velocity contribution
         }
     }
 
+    // Return the computed Jacobian matrix
     return jacobian;
 }
+
 
 Eigen::VectorXf DH::computeEndEffectorVelocity(
     const Eigen::VectorXf& jointVelocities) const {

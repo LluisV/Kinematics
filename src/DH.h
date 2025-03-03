@@ -191,14 +191,6 @@ public:
     Eigen::VectorXf computeEndEffectorVelocity(const Eigen::VectorXf& jointVelocities) const;
 
 private:
-    /**
-     * @brief Wraps an angle to be within [-π, π].
-     * 
-     * @param angle The angle to wrap.
-     * @return double The wrapped angle.
-     */
-    double wrapAngle(double angle) const;
-
     int numberOfJoints;         // Number of degrees of freedom
     std::vector<DHJoint> joints; // Vector of joint parameters
 };
