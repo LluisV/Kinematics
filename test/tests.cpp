@@ -102,7 +102,7 @@ void test_dh_basics() {
   Serial.println("\n=== Testing DH Basics ===");
   
   // Create a DH model with 3 DOF
-  DH dh(3, false); // Using classic DH
+  DH dh(3); // Using classic DH
   
   // Check number of DOF
   if (dh.getNumberOfJoints() != 3) {
@@ -159,7 +159,7 @@ void test_dh_basics() {
 void test_check_limits() {
   Serial.println("\n=== Testing areJointPositionsWithinLimits ===");
   
-  DH dh(2, false);
+  DH dh(2);
   
   // Set DH parameters
   dh.setJointParameters(0, 0, 0, 1.0, 0, JointType::REVOLUTE);  // Angular joint
@@ -226,7 +226,7 @@ void test_get_joint_transform() {
   
   // Test with Classic DH
   {
-    DH dh_classic(1, false);
+    DH dh_classic(1);
     dh_classic.setJointParameters(0, PI/2, 2.0, 1.0, PI/4, JointType::REVOLUTE);
     
     Eigen::Matrix4f expected;
@@ -254,35 +254,7 @@ void test_get_joint_transform() {
     }
   }
   
-  // Test with Modified DH
-  {
-    DH dh_modified(1, true);
-    dh_modified.setJointParameters(0, PI/2, 2.0, 1.0, PI/4, JointType::REVOLUTE);
-    
-    Eigen::Matrix4f expected;
-    float c_theta = cos(PI/2);
-    float s_theta = sin(PI/2);
-    float c_alpha = cos(PI/4);
-    float s_alpha = sin(PI/4);
-    
-    // Expected matrix for modified DH with given parameters
-    expected << c_theta, -s_theta, 0, 1.0,
-                s_theta*c_alpha, c_theta*c_alpha, -s_alpha, -s_alpha*2.0,
-                s_theta*s_alpha, c_theta*s_alpha, c_alpha, c_alpha*2.0,
-                0, 0, 0, 1;
-    
-    Eigen::Matrix4f result = dh_modified.getJointTransform(0);
-    
-    if (matrix_approx_equal(result, expected)) {
-      Serial.println("PASSED: Modified DH transformation matrix test passed!");
-    } else {
-      Serial.println("FAILED: Modified DH transformation matrix test failed!");
-      Serial.println("Expected:");
-      RoboticsUtils::print_matrix(expected);
-      Serial.println("Got:");
-      RoboticsUtils::print_matrix(result);
-    }
-  }
+
 }
 
 // Test the full transformation matrix calculation (getTransform)
@@ -290,7 +262,7 @@ void test_get_transform() {
   Serial.println("\n=== Testing getTransform ===");
   
   // Create a simple 2R planar robot
-  DH dh(2, false);  // Classic DH
+  DH dh(2);  // Classic DH
   
   // Set DH parameters
   dh.setJointParameters(0, 0, 0, 1.0, 0, JointType::REVOLUTE);  // Joint 1
@@ -409,7 +381,7 @@ void test_get_end_effector_pose() {
   Serial.println("\n=== Testing getEndEffectorPose ===");
   
   // Create a simple 2R planar robot
-  DH dh(2, false);  // Classic DH
+  DH dh(2);  // Classic DH
   
   // Set DH parameters
   dh.setJointParameters(0, 0, 0, 1.0, 0, JointType::REVOLUTE);  // Joint 1
@@ -450,7 +422,7 @@ void test_jacobian() {
   Serial.println("\n=== Testing computeJacobian ===");
   
   // Create a simple 2R planar robot
-  DH dh(2, false);  // Classic DH
+  DH dh(2);  // Classic DH
   
   // Set DH parameters
   dh.setJointParameters(0, 0, 0, 1.0, 0, JointType::REVOLUTE);  // Joint 1 (rotational)
@@ -527,7 +499,7 @@ void test_get_end_effector_velocity() {
   Serial.println("\n=== Testing computeEndEffectorVelocity ===");
   
   // Create a simple 2R planar robot
-  DH dh(2, false);  // Classic DH
+  DH dh(2);  // Classic DH
   
   // Set DH parameters
   dh.setJointParameters(0, 0, 0, 1.0, 0, JointType::REVOLUTE);  // Joint 1
@@ -586,7 +558,7 @@ void test_complex_robot() {
   Serial.println("\n=== Testing Complex Robot ===");
   
   // Create a 3-DOF robot with 2 rotational and 1 prismatic joint
-  DH dh(3, false);  // Classic DH
+  DH dh(3);  // Classic DH
   
   // Set DH parameters for a simple robot with:
   // - First joint rotates around Z
